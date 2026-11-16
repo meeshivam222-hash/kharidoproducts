@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KharidoProducts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a hostel notice-board turned marketplace. Sticky top bar, tabbed views, photo-first card grid with marigold price tags. */
+:root{
+  --bg:#F2F4F7;
+  --surface:#FFFFFF;
+  --ink:#15203A;
+  --muted:#5B657A;
+  --line:#DCE1E9;
+  --accent:#F2A900;
+  --accent-ink:#15203A;
+  --accent-soft:#FFF3D1;
+  --good:#0E7C5A; --good-bg:#DDF3EA;
+  --warn:#1D5FBF; --warn-bg:#E0EBFB;
+  --bad:#B4372B;  --bad-bg:#FBE3E0;
+  --ph-s:42%; --ph-l:88%; --ph-ink:30%;
+  --shadow:0 1px 2px rgba(21,32,58,.06),0 6px 18px rgba(21,32,58,.06);
+  --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1322; --surface:#161E31; --ink:#E7EBF3; --muted:#9AA4BA; --line:#2A3450;
+    --accent:#F5B82E; --accent-ink:#15203A; --accent-soft:#3A3014;
+    --good:#4FD1A1; --good-bg:#12392D; --warn:#7FB0FF; --warn-bg:#1A2D4F; --bad:#FF8E80; --bad-bg:#45201C;
+    --ph-s:28%; --ph-l:22%; --ph-ink:78%;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1322; --surface:#161E31; --ink:#E7EBF3; --muted:#9AA4BA; --line:#2A3450;
+  --accent:#F5B82E; --accent-ink:#15203A; --accent-soft:#3A3014;
+  --good:#4FD1A1; --good-bg:#12392D; --warn:#7FB0FF; --warn-bg:#1A2D4F; --bad:#FF8E80; --bad-bg:#45201C;
+  --ph-s:28%; --ph-l:22%; --ph-ink:78%;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+@media (max-width:420px){.wrap{padding:0 16px}}
+
+/* Top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-row{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:12px 0}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.logo-mark{width:34px;height:34px;border-radius:9px 9px 9px 2px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-family:var(--font-display);font-weight:800;font-size:19px;position:relative}
+.logo-mark::after{content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--surface)}
+.logo-text{font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.logo-text span{font-weight:600;color:var(--muted)}
+.logo-sub{display:block;font-family:var(--font-body);font-size:11.5px;color:var(--muted);font-weight:500;letter-spacing:0;margin-top:3px}
+.search{position:relative}
+.search input{width:100%;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 14px 0 40px}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--muted)}
+.top-actions{display:flex;gap:8px;align-items:center}
+@media (max-width:720px){
+  .top-row{grid-template-columns:1fr auto}
+  .search{grid-column:1/-1;order:3}
+  .logo-sub{display:none}
+}
+.tabs{display:flex;gap:4px;overflow-x:auto}
+.tab{appearance:none;border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;font-weight:600;color:var(--muted);cursor:pointer;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--bad);color:#fff;font-size:12px;font-weight:700;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+
+/* Buttons */
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;justify-content:center;text-decoration:none;color:var(--ink);line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:6px 10px;font-size:13.5px;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:14px;border:1px solid var(--line);cursor:pointer}
+
+main{padding:20px 0 60px}
+.notice{border:1px solid var(--line);background:var(--surface);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14.5px}
+.notice.warn{border-left-color:var(--accent)}
+
+/* Browse */
+.summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px;display:flex;gap:8px;align-items:baseline}
+.stat b{font-family:var(--font-display);font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13.5px}
+.hero{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.hero h1{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.02em}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chip-btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.chip-btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filters select{height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 10px}
+.check{display:inline-flex;gap:7px;align-items:center;font-size:14px;color:var(--muted);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .12s ease, box-shadow .12s ease}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.thumb{position:relative;aspect-ratio:4/3;background:hsl(var(--h,45) var(--ph-s) var(--ph-l));display:grid;place-items:center;overflow:hidden}
+.thumb .ph-label{font-family:var(--font-display);font-weight:800;font-size:20px;color:hsl(var(--h,45) 40% var(--ph-ink));opacity:.85;padding:0 12px;text-align:center}
+.thumb img.ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.thumb .pill{position:absolute;top:10px;left:10px;z-index:1}
+.thumb.sold img,.thumb.sold .ph-label{filter:grayscale(1);opacity:.55}
+.card-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.price-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.price{font-family:var(--font-display);font-weight:800;font-size:19px;font-variant-numeric:tabular-nums;background:var(--accent);color:var(--accent-ink);padding:1px 9px 1px 8px;border-radius:6px 6px 6px 1px}
+.nego{font-size:12px;color:var(--muted);font-weight:600}
+.card h3{font-family:var(--font-body);font-size:15.5px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:13.5px;margin:0}
+.seller-line{margin-top:auto;padding-top:6px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.pill.good{background:var(--good-bg);color:var(--good);border-color:transparent}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.pill.sample{background:var(--accent-soft);color:var(--ink);border-color:transparent}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:36px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);margin-bottom:6px;font-size:19px}
+.skel{height:270px;border-radius:14px;background:linear-gradient(90deg,var(--surface),var(--line),var(--surface));background-size:200% 100%;animation:sh 1.3s infinite linear}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* Panels (mine, requests) */
+.cols{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.panel h2{font-size:19px;margin-bottom:10px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.panel-head h2{margin:0}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px}
+dl.kv dt{color:var(--muted);font-size:13.5px}
+dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.rows{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px}
+.row .thumb{aspect-ratio:1;border-radius:9px;width:72px}
+.row .thumb .ph-label{font-size:12px}
+.row-title{font-weight:600;overflow-wrap:anywhere}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.row{grid-template-columns:56px 1fr}.row .thumb{width:56px}.row-actions{grid-column:1/-1;justify-content:flex-start}}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--surface);padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.req{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.req-top{display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap}
+.req-msg{background:var(--bg);border-radius:9px;padding:9px 12px;font-size:14.5px;overflow-wrap:anywhere;white-space:pre-wrap}
+.contact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
+.contact code{font-family:var(--font-body);font-weight:700;font-variant-numeric:tabular-nums}
+.section-gap{display:flex;flex-direction:column;gap:20px}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(10,15,30,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.dialog{background:var(--surface);border-radius:16px;width:100%;max-width:640px;box-shadow:0 20px 50px rgba(0,0,0,.3);position:relative}
+.dialog.narrow{max-width:460px}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);gap:10px}
+.dialog-head h2{font-size:20px}
+.dialog-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.x{appearance:none;border:0;background:var(--bg);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;flex:none}
+.gallery{display:flex;flex-direction:column;gap:8px}
+.gallery .main{aspect-ratio:4/3;border-radius:12px}
+.gallery .strip{display:flex;gap:8px}
+.gallery .strip .thumb{width:70px;aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent}
+.gallery .strip .thumb.on{border-color:var(--accent)}
+.detail-price{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.detail-price .price{font-size:26px}
+.desc{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.fact{background:var(--bg);border-radius:10px;padding:8px 12px}
+.fact small{display:block;color:var(--muted);font-size:12px}
+.fact b{font-weight:600}
+.box{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.box h3{font-size:16px}
+
+/* Forms */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-weight:600;font-size:14px}
+.field small{color:var(--muted);font-size:12.5px}
+.field input[type=text],.field input[type=number],.field input[type=tel],.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%}
+.field textarea{min-height:90px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.two{grid-template-columns:1fr}}
+.photo-drop{border:2px dashed var(--line);border-radius:12px;padding:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.photo-drop .prev{width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.err{color:var(--bad);font-size:13.5px;font-weight:600;min-height:1em}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-weight:600;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <a class="logo" href="#browse" data-action="tab" data-tab="browse" aria-label="KharidoProducts home">
+        <div class="logo-mark" aria-hidden="true">K</div>
+        <div><div class="logo-text">kharido<span>products</span></div><span class="logo-sub">Hostel se hostel, seedha deal</span></div>
+      </a>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search books, cycles, heaters, calculators…" aria-label="Search listings" autocomplete="off">
+      </div>
+      <div class="top-actions">
+        <button class="btn primary" data-action="sell" id="sell-btn">+ Sell an item</button>
+        <button class="avatar" data-action="profile" id="avatar" aria-label="Your hostel profile">?</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-action="tab" data-tab="browse" aria-selected="true">Browse</button>
+      <button class="tab" role="tab" data-action="tab" data-tab="mine" aria-selected="false">My listings</button>
+      <button class="tab" role="tab" data-action="tab" data-tab="requests" aria-selected="false">Requests <span class="badge" id="req-badge" hidden>0</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="status"></div>
+
+  <section id="view-browse">
+    <div class="hero">
+      <div>
+        <h1>Buy from the hostel next door</h1>
+        <p>Second-hand books, cycles, room gear and more, listed by students across campus.</p>
+      </div>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div class="toolbar">
+      <div class="chips" id="cat-chips" role="group" aria-label="Category"></div>
+      <div class="filters">
+        <select id="f-hostel" aria-label="Filter by hostel"></select>
+        <select id="f-sort" aria-label="Sort listings">
+          <option value="new">Newest first</option>
+          <option value="low">Price: low to high</option>
+          <option value="high">Price: high to low</option>
+        </select>
+        <label class="check"><input type="checkbox" id="f-sold"> Show sold items</label>
+      </div>
+    </div>
+    <div id="grid"></div>
+  </section>
+
+  <section id="view-mine" hidden><div id="mine"></div></section>
+  <section id="view-requests" hidden><div id="reqs"></div></section>
+</main>
+
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Constants ---------- */
+const CATS = [
+  {id:"books", label:"Books & notes", h:212},
+  {id:"electronics", label:"Electronics", h:262},
+  {id:"cycles", label:"Cycles", h:152},
+  {id:"room", label:"Room essentials", h:24},
+  {id:"stationery", label:"Stationery & lab", h:190},
+  {id:"sports", label:"Sports & fitness", h:96},
+  {id:"clothing", label:"Clothing", h:330},
+  {id:"other", label:"Other", h:45}
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
+const HOSTELS = ["Aravali","Dronagiri","Girnar","Himadri","Jwalamukhi","Kailash","Karakoram","Kumaon","Nilgiri","Saptagiri","Satpura","Shivalik","Udaigiri","Vindhyachal","Zanskar","Other / Day scholar"];
+const CONDS = ["Brand new","Like new","Good","Used","Needs repair"];
+const STATUS = {available:{label:"Available",cls:"good"}, reserved:{label:"Reserved",cls:"warn"}, sold:{label:"Sold",cls:"bad"}};
+
+/* ---------- State ---------- */
+const S = {
+  db:null, user:null, me:null, isOwner:false, canWrite:null, readOnly:false,
+  status:"init", slow:false,
+  sellers:{}, requests:{}, names:{},
+  mineLocal:null, reqLocal:null, pendMine:0, pendReq:0,
+  tab:"browse", q:"", cat:"all", hostel:"all", sort:"new", showSold:false,
+  modal:null, formPhotos:null, photoIdx:0
+};
+
+/* ---------- Helpers ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const str = (v,max)=>typeof v==="string" ? v.slice(0,max||500) : (typeof v==="number" ? String(v) : "");
+const num = v=>{const n=Number(v); return Number.isFinite(n)&&n>=0 ? n : 0;};
+const rupee = n=>"₹"+Math.round(num(n)).toLocaleString("en-IN");
+const clone = o=>JSON.parse(JSON.stringify(o||{}));
+const newId = p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function ago(t){
+  t=num(t); if(!t) return "";
+  const s=Math.max(0,(Date.now()-t)/1000);
+  if(s<60) return "just now";
+  if(s<3600) return Math.floor(s/60)+"m ago";
+  if(s<86400) return Math.floor(s/3600)+"h ago";
+  if(s<86400*30) return Math.floor(s/86400)+"d ago";
+  return new Date(t).toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+}
+function toast(msg){
+  const r=$("#toast-root"); r.innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`;
+  clearTimeout(toast.t); toast.t=setTimeout(()=>{r.innerHTML="";},3800);
+}
+function waLink(phone, text){
+  let d=String(phone||"").replace(/\D/g,"");
+  if(d.length===10) d="91"+d;
+  if(d.length<10) return "";
+  return "https://wa.me/"+d+(text?"?text="+encodeURIComponent(text):"");
+}
+
+/* ---------- Data views ---------- */
+function sellersView(){
+  const v=Object.assign({}, S.sellers);
+  if(S.me && S.mineLocal) v[S.me]=S.mineLocal;
+  return v;
+}
+function getMine(){ return S.mineLocal || (S.me && S.sellers[S.me]) || null; }
+function getMyReqs(){ return S.reqLocal || (S.me && S.requests[S.me]) || null; }
+function profileOf(id){
+  const d=sellersView()[id]; const p=d&&d.profile&&typeof d.profile==="object"?d.profile:null;
+  if(!p) return null;
+  return {hostel:str(p.hostel,40), room:str(p.room,20), phone:str(p.phone,20)};
+}
+function cleanItem(it, sid, doc){
+  if(!it||typeof it!=="object"||typeof it.id!=="string") return null;
+  const status=STATUS[it.status]?it.status:"available";
+  return {
+    id:it.id.slice(0,60), sellerId:sid, sample:!!doc.sample,
+    title:str(it.title,90)||"Untitled item", cat:CAT[it.cat]?it.cat:"other",
+    price:num(it.price), nego:!!it.nego, cond:CONDS.includes(it.cond)?it.cond:"Used",
+    hostel:str(it.hostel,40), desc:str(it.desc,1500), status,
+    photos:Math.min(3,Math.floor(num(it.photos))), pv:Math.floor(num(it.pv)),
+    created:num(it.created)
+  };
+}
+function allItems(){
+  const out=[]; const v=sellersView();
+  for(const [sid,d] of Object.entries(v)){
+    if(!d||!Array.isArray(d.items)) continue;
+    for(const raw of d.items){ const it=cleanItem(raw,sid,d); if(it) out.push(it); }
+  }
+  return out;
+}
+function findItem(sid,iid){ return allItems().find(i=>i.sellerId===sid&&i.id===iid)||null; }
+function nameOf(id){
+  if(id===S.me) return "You";
+  const d=sellersView()[id];
+  if(d&&d.sample) return "Sample seller";
+  return S.names[id] || "Student";
+}
+function initials(n){ return (n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("")||"?"; }
+function allRequests(){
+  const out=[];
+  const reqDocs=Object.assign({}, S.requests);
+  if(S.me && S.reqLocal) reqDocs[S.me]=S.reqLocal;
+  for(const [bid,d] of Object.entries(reqDocs)){
+    if(!d||!Array.isArray(d.list)) continue;
+    for(const r of d.list){
+      if(!r||typeof r.id!=="string") continue;
+      out.push({id:r.id.slice(0,60), buyerId:bid, sellerId:str(r.sellerId,120), itemId:str(r.itemId,60),
+        title:str(r.title,90), offer:num(r.offer), msg:str(r.msg,600), created:num(r.created), cancelled:r.state==="cancelled"});
+    }
+  }
+  return out;
+}
+function responseFor(r){
+  const d=sellersView()[r.sellerId];
+  const v=d&&d.responses&&typeof d.responses==="object"?d.responses[r.id]:null;
+  return v==="accepted"||v==="declined"?v:"pending";
+}
+function incoming(){ return S.me ? allRequests().filter(r=>r.sellerId===S.me && !r.cancelled).sort((a,b)=>b.created-a.created) : []; }
+function sent(){ return S.me ? allRequests().filter(r=>r.buyerId===S.me).sort((a,b)=>b.created-a.created) : []; }
+
+/* ---------- Images ---------- */
+const imgCache=new Map(); const imgQueue=[]; let inflight=0;
+function imgKey(it,i){ return it.sellerId+"|"+it.id+"|"+i+"|"+it.pv; }
+function thumbHTML(it, i, extraCls){
+  const c=CAT[it.cat]; const has=it.photos>i;
+  const sold=it.status==="sold"?" sold":"";
+  return `<div class="thumb${sold}${extraCls?" "+extraCls:""}" style="--h:${c.h}" ${has?`data-img="${esc(imgKey(it,i))}"`:""}><span class="ph-label">${esc(c.label)}</span></div>`;
+}
+function pump(){
+  while(inflight<4 && imgQueue.length && S.db){
+    const key=imgQueue.shift(); inflight++;
+    const [sid,iid,i]=key.split("|");
+    let ref; try{ ref=S.db.doc(`images/${sid}/pics/${iid}-${i}`); }catch(e){ imgCache.set(key,null); inflight--; continue; }
+    ref.get().then(s=>{
+      const d=s.exists?s.data():null;
+      const v=d&&typeof d.data==="string"&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(d.data)?d.data:null;
+      imgCache.set(key,v); applyImg(key);
+    }).catch(()=>imgCache.set(key,null)).finally(()=>{inflight--; pump();});
+  }
+}
+function setImg(el,v){
+  if(!v||v==="loading") return;
+  let im=el.querySelector("img.ph-img");
+  if(!im){ im=document.createElement("img"); im.className="ph-img"; im.alt=""; el.prepend(im); }
+  if(im.src!==v) im.src=v;
+}
+function applyImg(key){ document.querySelectorAll("[data-img]").forEach(el=>{ if(el.dataset.img===key) setImg(el,imgCache.get(key)); }); }
+function hydrate(root){
+  (root||document).querySelectorAll("[data-img]").forEach(el=>{
+    const k=el.dataset.img;
+    if(imgCache.has(k)) setImg(el,imgCache.get(k));
+    else { imgCache.set(k,"loading"); imgQueue.push(k); }
+  });
+  pump();
+}
+async function compress(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url;});
+    let max=900, q=0.8, out="";
+    for(let k=0;k<7;k++){
+      const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.naturalWidth*sc)); c.height=Math.max(1,Math.round(img.naturalHeight*sc));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      out=c.toDataURL("image/jpeg",q);
+      if(out.length<190000) return out;
+      max=Math.round(max*0.8); q=Math.max(0.5,q-0.07);
+    }
+    return out.length<240000?out:null;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* ---------- Writes ---------- */
+const chains={};
+function serial(key,task){ const p=(chains[key]||Promise.resolve()).then(task); chains[key]=p.catch(()=>{}); return p; }
+function canPost(){
+  if(!S.db||!S.me){ toast("Open KharidoProducts on claude.ai while signed in to buy or sell."); return false; }
+  if(S.readOnly||S.canWrite===false){ toast("You can browse, but posting needs Contributor access. Ask the page owner to share it with you as a Contributor."); return false; }
+  return true;
+}
+function handleErr(e){
+  const code=e&&e.code;
+  if(code==="invalid_argument"){ S.readOnly=true; renderStatus(); toast("This account can't post here yet. Ask the page owner for Contributor access."); }
+  else if(code==="quota_exceeded") toast("Marketplace storage is full. Delete sold listings to free space.");
+  else if(code==="resource_exhausted") toast("Too many changes at once. Wait a few seconds and try again.");
+  else toast("Couldn't save. Check your connection and try again.");
+}
+async function writeMine(fn){
+  S.pendMine++;
+  try{
+    await serial("mine", async()=>{
+      const cur=clone(getMine()||{});
+      if(!Array.isArray(cur.items)) cur.items=[];
+      if(!cur.responses||typeof cur.responses!=="object") cur.responses={};
+      fn(cur); cur.updated=Date.now();
+      S.mineLocal=cur; renderMain();
+      await S.db.doc("sellers/"+S.me).set(cur);
+    });
+  } catch(e){ S.mineLocal=null; handleErr(e); try{ e._h=true; }catch(_){} renderMain(); throw e; }
+  finally{ S.pendMine--; }
+}
+async function writeReqs(fn){
+  S.pendReq++;
+  try{
+    await serial("req", async()=>{
+      const cur=clone(getMyReqs()||{});
+      if(!Array.isArray(cur.list)) cur.list=[];
+      fn(cur);
+      if(cur.list.length>120) cur.list=cur.list.slice(-120);
+      S.reqLocal=cur; renderMain();
+      await S.db.doc("requests/"+S.me).set(cur);
+    });
+  } catch(e){ S.reqLocal=null; handleErr(e); try{ e._h=true; }catch(_){} renderMain(); throw e; }
+  finally{ S.pendReq--; }
+}
+
+/* ---------- Rendering ---------- */
+function renderStatus(){
+  const el=$("#status"); let h="";
+  if(S.status==="nodb") h=`<div class="notice warn">Open this page on claude.ai while signed in to see live listings, sell items and send requests.</div>`;
+  else if(S.status==="error") h=`<div class="notice warn">The marketplace couldn't load. Reload the page to try again.</div>`;
+  else if(S.slow) h=`<div class="notice warn">Can't reach the marketplace right now. What you see may be out of date.</div>`;
+  if(S.status==="ready" && (S.readOnly||S.canWrite===false)) h+=`<div class="notice">You can browse listings. To sell or send buy requests, ask the page owner to share KharidoProducts with you as a <b>Contributor</b>.</div>`;
+  el.innerHTML=h;
+}
+function renderChips(){
+  const all=[{id:"all",label:"All items"}].concat(CATS);
+  $("#cat-chips").innerHTML=all.map(c=>`<button class="chip-btn" data-action="cat" data-cat="${c.id}" aria-pressed="${S.cat===c.id}">${esc(c.label)}</button>`).join("");
+}
+function renderHostelFilter(){
+  const sel=$("#f-hostel");
+  sel.innerHTML=`<option value="all">All hostels</option>`+HOSTELS.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
+  sel.value=S.hostel;
+}
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  let items=allItems().filter(it=>{
+    if(!S.showSold && it.status==="sold") return false;
+    if(S.cat!=="all" && it.cat!==S.cat) return false;
+    if(S.hostel!=="all" && it.hostel!==S.hostel) return false;
+    if(q && !(it.title+" "+it.desc+" "+CAT[it.cat].label+" "+it.hostel).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if(S.sort==="low") items.sort((a,b)=>a.price-b.price);
+  else if(S.sort==="high") items.sort((a,b)=>b.price-a.price);
+  else items.sort((a,b)=>b.created-a.created);
+  return items;
+}
+function cardHTML(it){
+  const st=STATUS[it.status];
+  const pill = it.sample ? `<span class="pill sample">Sample</span>` : (it.status!=="available"?`<span class="pill ${st.cls}">${st.label}</span>`:"");
+  return `<article class="card" tabindex="0" role="button" data-action="open" data-sid="${esc(it.sellerId)}" data-iid="${esc(it.id)}" aria-label="${esc(it.title)}, ${esc(rupee(it.price))}">
+    <div style="position:relative">${thumbHTML(it,0)}${pill?`<div style="position:absolute;top:10px;left:10px">${pill}</div>`:""}</div>
+    <div class="card-body">
+      <div class="price-row"><span class="price">${rupee(it.price)}</span>${it.nego?`<span class="nego">Negotiable</span>`:""}</div>
+      <h3>${esc(it.title)}</h3>
+      <p class="meta">${esc(it.cond)} · ${esc(it.hostel||"Hostel not set")}</p>
+      <div class="seller-line"><span>${esc(nameOf(it.sellerId))}</span><span>${esc(ago(it.created))}</span></div>
+    </div>
+  </article>`;
+}
+function renderBrowse(){
+  const items=allItems();
+  const live=items.filter(i=>i.status!=="sold");
+  const hostels=new Set(live.map(i=>i.hostel).filter(Boolean));
+  const sold=items.filter(i=>i.status==="sold").length;
+  $("#summary").innerHTML = S.status==="ready" ? `
+    <div class="stat"><b>${live.length}</b><span>for sale</span></div>
+    <div class="stat"><b>${hostels.size}</b><span>hostels</span></div>
+    <div class="stat"><b>${sold}</b><span>sold</span></div>` : "";
+  const g=$("#grid");
+  if(S.status==="init"||S.status==="loading"){
+    g.innerHTML=`<div class="grid">${"<div class='skel'></div>".repeat(8)}</div>`; return;
+  }
+  const list=filtered();
+  if(!list.length){
+    const any=items.length>0;
+    g.innerHTML=`<div class="empty"><h3>${any?"No items match":"Nothing listed yet"}</h3>
+      <p>${any?"Try another category, hostel or search word.":"Be the first. List a textbook, a cycle, or the heater you won't need after March."}</p>
+      ${any?`<button class="btn" data-action="clear-filters">Clear filters</button>`:`<button class="btn primary" data-action="sell">+ Sell an item</button>`}</div>`;
+    return;
+  }
+  g.innerHTML=`<div class="grid">${list.map(cardHTML).join("")}</div>`;
+  hydrate(g);
+}
+function renderMine(){
+  const el=$("#mine");
+  if(!S.me){ el.innerHTML=`<div class="empty"><h3>Sign in to manage your listings</h3><p>Open this page on claude.ai while signed in.</p></div>`; return; }
+  const p=profileOf(S.me);
+  const mine=allItems().filter(i=>i.sellerId===S.me).sort((a,b)=>b.created-a.created);
+  const samples=S.sellers.examples&&S.sellers.examples.sample;
+  const profileBox=`<div class="panel">
+    <div class="panel-head"><h2>Your hostel profile</h2><button class="btn small" data-action="profile">${p?"Edit":"Set up"}</button></div>
+    ${p?`<dl class="kv"><dt>Name</dt><dd>${esc(S.names[S.me]||"From your Claude account")}</dd><dt>Hostel</dt><dd>${esc(p.hostel||"Not set")}</dd><dt>Room</dt><dd>${esc(p.room||"Not set")}</dd><dt>WhatsApp</dt><dd>${esc(p.phone||"Not shared")}</dd></dl>
+      <p class="meta">Buyers see your hostel, room and number on your listings so they can reach you.</p>`
+      :`<p class="meta">Add your hostel, room and WhatsApp number before you sell or send a request, so the other person knows where to meet you.</p>`}
+    ${S.isOwner?`<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+      <h2 style="font-size:16px;margin-bottom:6px">Page owner</h2>
+      <p class="meta">Share this page with hostel mates as <b>Contributor</b> so they can sell and request. You can remove any listing from its detail view.</p>
+      ${samples?`<button class="btn small danger" data-action="remove-samples" style="margin-top:10px">Remove sample listings</button>`:""}`:""}
+  </div>`;
+  const listBox=`<div class="panel">
+    <div class="panel-head"><h2>Your listings (${mine.length})</h2><button class="btn primary small" data-action="sell">+ Sell an item</button></div>
+    ${mine.length?`<div class="rows">${mine.map(it=>`<div class="row">
+        <div data-action="open" data-sid="${esc(it.sellerId)}" data-iid="${esc(it.id)}" style="cursor:pointer">${thumbHTML(it,0)}</div>
+        <div><div class="row-title">${esc(it.title)}</div><div class="meta">${rupee(it.price)} · ${esc(ago(it.created))}</div></div>
+        <div class="row-actions">
+          <div class="seg" role="group" aria-label="Status">${Object.entries(STATUS).map(([k,v])=>`<button data-action="set-status" data-iid="${esc(it.id)}" data-st="${k}" aria-pressed="${it.status===k}">${v.label}</button>`).join("")}</div>
+          <button class="btn small" data-action="edit" data-iid="${esc(it.id)}">Edit</button>
+          <button class="btn small danger" data-action="delete" data-iid="${esc(it.id)}">Delete</button>
+        </div></div>`).join("")}</div>`
+      :`<div class="empty"><h3>You haven't listed anything</h3><p>Old notes, a drafter, a cooler, a cycle: someone in another hostel needs it.</p></div>`}
+  </div>`;
+  el.innerHTML=`<div class="cols">${profileBox}${listBox}</div>`;
+  hydrate(el);
+}
+function contactHTML(id, itemTitle){
+  const p=profileOf(id);
+  if(!p) return `<span class="meta">No contact details added yet.</span>`;
+  const wa=p.phone?waLink(p.phone, itemTitle?`Hi! About "${itemTitle}" on KharidoProducts`:""):"";
+  return `<div class="contact"><span>${esc(p.hostel||"Hostel not set")}${p.room?`, room ${esc(p.room)}`:""}</span>
+    ${p.phone?`<span>· <code>${esc(p.phone)}</code></span>`:""}
+    ${wa?`<a class="btn small" href="${esc(wa)}" target="_blank" rel="noopener">Open WhatsApp</a>`:""}</div>`;
+}
+function respPill(s){ return s==="accepted"?`<span class="pill good">Accepted</span>`:s==="declined"?`<span class="pill bad">Declined</span>`:`<span class="pill">Waiting</span>`; }
+function renderRequests(){
+  const el=$("#reqs");
+  if(!S.me){ el.innerHTML=`<div class="empty"><h3>Sign in to see requests</h3><p>Open this page on claude.ai while signed in.</p></div>`; return; }
+  const inc=incoming(), out=sent();
+  const incHTML=inc.length?inc.map(r=>{
+    const it=findItem(S.me,r.itemId); const s=responseFor(r);
+    return `<div class="req">
+      <div class="req-top"><div><div class="row-title">${esc(nameOf(r.buyerId))} wants “${esc(it?it.title:r.title)}”</div>
+        <div class="meta">Offered <b>${rupee(r.offer)}</b>${it?` (listed at ${rupee(it.price)})`:""} · ${esc(ago(r.created))}</div></div>${respPill(s)}</div>
+      ${r.msg?`<div class="req-msg">${esc(r.msg)}</div>`:""}
+      ${contactHTML(r.buyerId, it?it.title:r.title)}
+      ${s==="pending"?`<div class="form-actions" style="justify-content:flex-start">
+        <button class="btn primary small" data-action="respond" data-rid="${esc(r.id)}" data-iid="${esc(r.itemId)}" data-v="accepted">Accept and reserve</button>
+        <button class="btn small" data-action="respond" data-rid="${esc(r.id)}" data-iid="${esc(r.itemId)}" data-v="declined">Decline</button></div>`:""}
+    </div>`;}).join(""):`<div class="empty"><p>No one has requested your items yet.</p></div>`;
+  const outHTML=out.length?out.map(r=>{
+    const it=findItem(r.sellerId,r.itemId); const s=r.cancelled?"cancelled":responseFor(r);
+    const soldElse = it && it.status==="sold" && s!=="accepted";
+    return `<div class="req">
+      <div class="req-top"><div><div class="row-title">${esc(it?it.title:r.title)}</div>
+        <div class="meta">Seller: ${esc(nameOf(r.sellerId))} · you offered <b>${rupee(r.offer)}</b> · ${esc(ago(r.created))}</div></div>
+        ${s==="cancelled"?`<span class="pill">Cancelled</span>`:soldElse?`<span class="pill bad">Sold</span>`:respPill(s)}</div>
+      ${s==="accepted"?`<div class="meta">Seller accepted. Meet them to pick it up:</div>${contactHTML(r.sellerId, it?it.title:r.title)}`:""}
+      ${s==="pending"?`<div><button class="btn small" data-action="cancel-req" data-rid="${esc(r.id)}">Cancel request</button></div>`:""}
+    </div>`;}).join(""):`<div class="empty"><p>You haven't sent any requests. Open an item and tap “Send request”.</p></div>`;
+  el.innerHTML=`<div class="section-gap">
+    <div class="panel"><div class="panel-head"><h2>For your items (${inc.filter(r=>responseFor(r)==="pending").length} waiting)</h2></div><div class="rows">${incHTML}</div></div>
+    <div class="panel"><div class="panel-head"><h2>Sent by you</h2></div><div class="rows">${outHTML}</div></div>
+  </div>`;
+}
+function renderTabs(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", String(t.dataset.tab===S.tab)));
+  $("#view-browse").hidden=S.tab!=="browse";
+  $("#view-mine").hidden=S.tab!=="mine";
+  $("#view-requests").hidden=S.tab!=="requests";
+  const n=incoming().filter(r=>responseFor(r)==="pending").length;
+  const b=$("#req-badge"); b.hidden=!n; b.textContent=n;
+  const av=$("#avatar"); av.textContent=S.me?initials(S.names[S.me]||"Me"):"?";
+}
+function renderMain(){
+  renderStatus(); renderTabs();
+  if(S.tab==="browse") renderBrowse();
+  if(S.tab==="mine") renderMine();
+  if(S.tab==="requests") renderRequests();
+}
+
+/* ---------- Modals ---------- */
+function openModal(m){ S.modal=m; renderModal(); }
+function closeModal(){ S.modal=null; S.formPhotos=null; $("#modal-root").innerHTML=""; }
+function dialog(title, body, narrow){
+  return `<div class="overlay" data-action="overlay"><div class="dialog${narrow?" narrow":""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="dialog-head"><h2>${esc(title)}</h2><button class="x" data-action="close" aria-label="Close">×</button></div>
+    <div class="dialog-body">${body}</div></div></div>`;
+}
+function renderModal(){
+  const m=S.modal; const root=$("#modal-root");
+  if(!m){ root.innerHTML=""; return; }
+  if(m.type==="item") root.innerHTML=itemModal(m);
+  else if(m.type==="sell") root.innerHTML=sellModal(m);
+  else if(m.type==="profile") root.innerHTML=profileModal(m);
+  hydrate(root);
+  const f=root.querySelector("[autofocus]"); if(f) f.focus();
+}
+function itemModal(m){
+  const it=findItem(m.sid,m.iid);
+  if(!it) return dialog("Item not found", `<p>This listing was removed by the seller.</p>`, true);
+  const c=CAT[it.cat]; const st=STATUS[it.status];
+  const idx=Math.min(S.photoIdx, Math.max(0,it.photos-1));
+  const gallery=`<div class="gallery">${thumbHTML(it,idx,"main")}
+    ${it.photos>1?`<div class="strip">${Array.from({length:it.photos},(_,i)=>`<div data-action="photo" data-i="${i}">${thumbHTML(it,i,i===idx?"on":"")}</div>`).join("")}</div>`:""}</div>`;
+  const own=it.sellerId===S.me;
+  const myReq=sent().find(r=>r.itemId===it.id&&r.sellerId===it.sellerId&&!r.cancelled);
+  let action="";
+  if(own){
+    action=`<div class="box"><h3>This is your listing</h3><div class="form-actions" style="justify-content:flex-start">
+      <button class="btn small" data-action="edit" data-iid="${esc(it.id)}">Edit listing</button>
+      <button class="btn small" data-action="tab" data-tab="requests">See requests</button></div></div>`;
+  } else if(it.sample){
+    action=`<div class="box"><p class="meta" style="margin:0">This is a sample listing that shows how items look. Real listings from students appear alongside it.</p></div>`;
+  } else if(it.status==="sold"){
+    action=`<div class="box"><p class="meta" style="margin:0">This item has been sold.</p></div>`;
+  } else if(myReq){
+    const s=responseFor(myReq);
+    action=`<div class="box"><div class="req-top"><h3>Your request: ${rupee(myReq.offer)}</h3>${respPill(s)}</div>
+      ${s==="accepted"?`<div class="meta">Seller accepted. Reach them to pick it up.</div>`:""}
+      ${s==="pending"?`<div><button class="btn small" data-action="cancel-req" data-rid="${esc(myReq.id)}">Cancel request</button></div>`:""}</div>`;
+  } else {
+    action=`<form class="box" id="req-form" data-sid="${esc(it.sellerId)}" data-iid="${esc(it.id)}">
+      <h3>Send a buy request</h3>
+      <div class="two">
+        <div class="field"><label for="r-offer">Your offer (₹)</label><input type="number" id="r-offer" min="0" max="500000" step="1" value="${it.price}" required></div>
+        <div class="field"><label for="r-when">When can you pick up?</label><input type="text" id="r-when" maxlength="60" placeholder="Today after 8 pm"></div>
+      </div>
+      <div class="field"><label for="r-msg">Message to seller</label><textarea id="r-msg" maxlength="500" placeholder="I'm in Satpura. Can we meet at the mess gate?"></textarea></div>
+      <div class="err" id="r-err"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">Send request</button></div>
+    </form>`;
+  }
+  const admin = S.isOwner && !own ? `<div><button class="btn small danger" data-action="admin-remove" data-sid="${esc(it.sellerId)}" data-iid="${esc(it.id)}">Remove listing (page owner)</button></div>`:"";
+  return dialog(it.title, `${gallery}
+    <div class="detail-price"><span class="price">${rupee(it.price)}</span>${it.nego?`<span class="pill">Negotiable</span>`:`<span class="pill">Fixed price</span>`}<span class="pill ${st.cls}">${st.label}</span>${it.sample?`<span class="pill sample">Sample</span>`:""}</div>
+    <div class="facts">
+      <div class="fact"><small>Category</small><b>${esc(c.label)}</b></div>
+      <div class="fact"><small>Condition</small><b>${esc(it.cond)}</b></div>
+      <div class="fact"><small>Hostel</small><b>${esc(it.hostel||"Not set")}</b></div>
+      <div class="fact"><small>Listed</small><b>${esc(ago(it.created))}</b></div>
+    </div>
+    ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
+    <div class="box"><h3>Seller: ${esc(nameOf(it.sellerId))}</h3>${it.sample?`<span class="meta">Sample listing, no contact.</span>`:contactHTML(it.sellerId,it.title)}</div>
+    ${action}${admin}`);
+}
+function opt(list, val){ return list.map(v=>`<option value="${esc(v)}"${v===val?" selected":""}>${esc(v)}</option>`).join(""); }
+function sellModal(m){
+  const it=m.editId?findItem(S.me,m.editId):null;
+  const p=profileOf(S.me)||{};
+  const photos=S.formPhotos;
+  return dialog(it?"Edit listing":"Sell an item", `<form id="sell-form" class="dialog-form" style="display:flex;flex-direction:column;gap:14px">
+    <div class="field"><label for="s-title">What are you selling?</label><input type="text" id="s-title" maxlength="90" required placeholder="Casio fx-991EX calculator" value="${esc(it?it.title:"")}" autofocus></div>
+    <div class="two">
+      <div class="field"><label for="s-cat">Category</label><select id="s-cat">${CATS.map(c=>`<option value="${c.id}"${it&&it.cat===c.id?" selected":""}>${esc(c.label)}</option>`).join("")}</select></div>
+      <div class="field"><label for="s-cond">Condition</label><select id="s-cond">${opt(CONDS, it?it.cond:"Good")}</select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="s-price">Price (₹)</label><input type="number" id="s-price" min="0" max="500000" step="1" required value="${it?it.price:""}" placeholder="700"></div>
+      <div class="field"><label for="s-hostel">Pick up from</label><select id="s-hostel">${opt(HOSTELS, it?it.hostel:(p.hostel||HOSTELS[0]))}</select></div>
+    </div>
+    <label class="check"><input type="checkbox" id="s-nego"${!it||it.nego?" checked":""}> Price is negotiable</label>
+    <div class="field"><label for="s-desc">Details</label><textarea id="s-desc" maxlength="1500" placeholder="Bought in 2024, used for one semester. Comes with cover. Pick up from my room after 6 pm.">${esc(it?it.desc:"")}</textarea></div>
+    <div class="field"><label for="s-photos">Photos (up to 3)</label>
+      <div class="photo-drop">
+        <input type="file" id="s-photos" accept="image/jpeg,image/png,image/webp" multiple>
+        <div id="s-prev" style="display:flex;gap:8px">${photos?photos.map(d=>`<img class="prev" src="${d}" alt="">`).join(""):""}</div>
+      </div>
+      <small>${it&&it.photos?"Choosing new photos replaces the current ones. ":""}Photos are resized before upload.</small></div>
+    <div class="err" id="s-err"></div>
+    <div class="form-actions"><button type="button" class="btn" data-action="close">Cancel</button><button class="btn primary" type="submit" id="s-submit">${it?"Save changes":"Post listing"}</button></div>
+  </form>`);
+}
+function profileModal(m){
+  const p=profileOf(S.me)||{};
+  return dialog("Your hostel profile", `<form id="profile-form" style="display:flex;flex-direction:column;gap:14px">
+    ${m.next?`<p class="meta" style="margin:0">Add where you stay first, so the other student knows where to meet you.</p>`:""}
+    <div class="two">
+      <div class="field"><label for="p-hostel">Hostel</label><select id="p-hostel" autofocus>${opt(HOSTELS,p.hostel||"")}</select></div>
+      <div class="field"><label for="p-room">Room number</label><input type="text" id="p-room" maxlength="20" placeholder="214" value="${esc(p.room||"")}"></div>
+    </div>
+    <div class="field"><label for="p-phone">WhatsApp number (optional)</label><input type="tel" id="p-phone" maxlength="16" placeholder="98765 43210" value="${esc(p.phone||"")}">
+      <small>Everyone who can open KharidoProducts can see this number.</small></div>
+    <div class="err" id="p-err"></div>
+    <div class="form-actions"><button type="button" class="btn" data-action="close">Cancel</button><button class="btn primary" type="submit">Save profile</button></div>
+  </form>`, true);
+}
+function refreshItemModal(){
+  if(!S.modal||S.modal.type!=="item") return;
+  const a=document.activeElement; const root=$("#modal-root");
+  const form=root.querySelector("#req-form");
+  const typing=form && (form.contains(a) || $("#r-msg").value || $("#r-when").value);
+  if(!typing) renderModal();
+}
+
+/* ---------- Actions ---------- */
+function needProfile(next){
+  if(!canPost()) return true;
+  if(!profileOf(S.me)){ openModal({type:"profile", next}); return true; }
+  return false;
+}
+function startSell(editId){
+  if(needProfile({type:"sell", editId})) return;
+  S.formPhotos=null; openModal({type:"sell", editId});
+}
+async function submitSell(){
+  const err=$("#s-err"); err.textContent="";
+  const title=$("#s-title").value.trim(); const price=Number($("#s-price").value);
+  if(title.length<3){ err.textContent="Give the item a name of at least 3 characters."; return; }
+  if(!Number.isFinite(price)||price<0||price>500000){ err.textContent="Enter a price between ₹0 and ₹5,00,000."; return; }
+  const btn=$("#s-submit"); btn.disabled=true; btn.textContent="Saving…";
+  const editId=S.modal.editId; const iid=editId||newId("i");
+  const old=editId?findItem(S.me,editId):null;
+  const photos=S.formPhotos;
+  try{
+    let pv=old?old.pv:0, count=old?old.photos:0;
+    if(photos&&photos.length){
+      pv=pv+1;
+      for(let i=0;i<photos.length;i++){
+        await S.db.doc(`images/${S.me}/pics/${iid}-${i}`).set({data:photos[i]});
+        imgCache.set(`${S.me}|${iid}|${i}|${pv}`, photos[i]);
+      }
+      for(let i=photos.length;i<count;i++){ try{ await S.db.doc(`images/${S.me}/pics/${iid}-${i}`).delete(); }catch(e){} }
+      count=photos.length;
+    }
+    const data={id:iid, title, cat:$("#s-cat").value, price:Math.round(price), nego:$("#s-nego").checked,
+      cond:$("#s-cond").value, hostel:$("#s-hostel").value, desc:$("#s-desc").value.trim().slice(0,1500),
+      photos:count, pv, status:old?old.status:"available", created:old?old.created:Date.now()};
+    await writeMine(d=>{
+      const i=d.items.findIndex(x=>x&&x.id===iid);
+      if(i>=0) d.items[i]=data; else d.items.push(data);
+    });
+    closeModal(); toast(old?"Listing updated.":"Your item is live.");
+    if(!old){ S.tab="browse"; renderMain(); }
+  }catch(e){
+    if(!(e&&e._h)) handleErr(e);
+    btn.disabled=false; btn.textContent=old?"Save changes":"Post listing";
+  }
+}
+async function submitProfile(){
+  const hostel=$("#p-hostel").value, room=$("#p-room").value.trim().slice(0,20), phone=$("#p-phone").value.trim().slice(0,16);
+  if(phone && phone.replace(/\D/g,"").length<10){ $("#p-err").textContent="Enter a 10-digit number, or leave it empty."; return; }
+  const next=S.modal.next;
+  try{
+    await writeMine(d=>{ d.profile={hostel, room, phone}; });
+    toast("Profile saved.");
+    if(next&&next.type==="sell"){ S.formPhotos=null; openModal(next); }
+    else if(next&&next.type==="item"){ openModal(next); }
+    else closeModal();
+  }catch(e){}
+}
+async function submitRequest(form){
+  const sid=form.dataset.sid, iid=form.dataset.iid; const it=findItem(sid,iid);
+  if(!it) return;
+  if(needProfile({type:"item", sid, iid})) return;
+  const offer=Number($("#r-offer").value);
+  if(!Number.isFinite(offer)||offer<0||offer>500000){ $("#r-err").textContent="Enter an offer between ₹0 and ₹5,00,000."; return; }
+  const when=$("#r-when").value.trim(), msg=$("#r-msg").value.trim();
+  const full=[when?"Pick-up: "+when:"", msg].filter(Boolean).join("\n").slice(0,600);
+  const btn=form.querySelector("button[type=submit]"); btn.disabled=true;
+  try{
+    await writeReqs(d=>{ d.list.push({id:newId("r"), sellerId:sid, itemId:iid, title:it.title, offer:Math.round(offer), msg:full, created:Date.now(), state:"open"}); });
+    toast("Request sent. You'll see the seller's answer under Requests.");
+    renderModal();
+  }catch(e){ btn.disabled=false; }
+}
+
+document.addEventListener("click", async e=>{
+  const t=e.target.closest("[data-action]"); if(!t) return;
+  const a=t.dataset.action;
+  if(a==="overlay"){ if(e.target===t) closeModal(); return; }
+  if(a==="close"){ closeModal(); return; }
+  if(a==="tab"){ e.preventDefault(); closeModal(); S.tab=t.dataset.tab; renderMain(); window.scrollTo(0,0); return; }
+  if(a==="cat"){ S.cat=t.dataset.cat; renderChips(); renderBrowse(); return; }
+  if(a==="clear-filters"){ S.cat="all"; S.hostel="all"; S.q=""; $("#q").value=""; $("#f-hostel").value="all"; renderChips(); renderBrowse(); return; }
+  if(a==="open"){ S.photoIdx=0; openModal({type:"item", sid:t.dataset.sid, iid:t.dataset.iid}); return; }
+  if(a==="photo"){ S.photoIdx=Number(t.dataset.i)||0; renderModal(); return; }
+  if(a==="sell"){ startSell(null); return; }
+  if(a==="edit"){ startSell(t.dataset.iid); return; }
+  if(a==="profile"){ if(canPost()) openModal({type:"profile"}); return; }
+  if(a==="set-status"){
+    if(!canPost()) return;
+    const iid=t.dataset.iid, st=t.dataset.st;
+    try{ await writeMine(d=>{ const x=d.items.find(i=>i&&i.id===iid); if(x) x.status=st; }); }catch(_){}
+    return;
+  }
+  if(a==="delete"){
+    if(!canPost()) return;
+    if(t.dataset.armed!=="1"){ t.dataset.armed="1"; t.textContent="Tap again to delete"; setTimeout(()=>{ if(t.isConnected){ t.dataset.armed=""; t.textContent="Delete"; } },3500); return; }
+    const iid=t.dataset.iid; const it=findItem(S.me,iid);
+    try{
+      await writeMine(d=>{ d.items=d.items.filter(i=>!(i&&i.id===iid)); });
+      for(let i=0;i<(it?it.photos:0);i++){ try{ await S.db.doc(`images/${S.me}/pics/${iid}-${i}`).delete(); }catch(_){} }
+      toast("Listing deleted.");
+    }catch(_){}
+    return;
+  }
+  if(a==="respond"){
+    if(!canPost()) return;
+    const rid=t.dataset.rid, iid=t.dataset.iid, v=t.dataset.v;
+    try{ await writeMine(d=>{ d.responses[rid]=v; if(v==="accepted"){ const x=d.items.find(i=>i&&i.id===iid); if(x&&x.status==="available") x.status="reserved"; } });
+      toast(v==="accepted"?"Accepted. The item is now marked Reserved.":"Request declined."); }catch(_){}
+    return;
+  }
+  if(a==="cancel-req"){
+    if(!canPost()) return;
+    const rid=t.dataset.rid;
+    try{ await writeReqs(d=>{ const r=d.list.find(x=>x&&x.id===rid); if(r) r.state="cancelled"; }); toast("Request cancelled."); renderModal(); }catch(_){}
+    return;
+  }
+  if(a==="admin-remove"){
+    if(t.dataset.armed!=="1"){ t.dataset.armed="1"; t.textContent="Tap again to remove"; return; }
+    const sid=t.dataset.sid, iid=t.dataset.iid;
+    try{
+      await serial("s:"+sid, async()=>{ const cur=clone(S.sellers[sid]); cur.items=(Array.isArray(cur.items)?cur.items:[]).filter(i=>!(i&&i.id===iid)); await S.db.doc("sellers/"+sid).set(cur); });
+      closeModal(); toast("Listing removed.");
+    }catch(err){ handleErr(err); }
+    return;
+  }
+  if(a==="remove-samples"){
+    if(t.dataset.armed!=="1"){ t.dataset.armed="1"; t.textContent="Tap again to remove samples"; return; }
+    try{ await S.db.doc("sellers/examples").delete(); toast("Sample listings removed."); }catch(err){ handleErr(err); }
+    return;
+  }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape" && S.modal){ closeModal(); return; }
+  if((e.key==="Enter"||e.key===" ") && e.target.matches && e.target.matches("article.card")){ e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("submit", e=>{
+  e.preventDefault();
+  if(e.target.id==="sell-form") submitSell();
+  else if(e.target.id==="profile-form") submitProfile();
+  else if(e.target.id==="req-form") submitRequest(e.target);
+});
+document.addEventListener("change", async e=>{
+  if(e.target.id==="s-photos"){
+    const files=[...e.target.files].slice(0,3); const err=$("#s-err"); err.textContent="";
+    const out=[];
+    for(const f of files){
+      try{ const d=await compress(f); if(d) out.push(d); else err.textContent="One photo was too large to use."; }
+      catch(_){ err.textContent="Couldn't read one photo. Use a JPG or PNG."; }
+    }
+    S.formPhotos=out.length?out:null;
+    $("#s-prev").innerHTML=out.map(d=>`<img class="prev" src="${d}" alt="">`).join("");
+  }
+  if(e.target.id==="f-hostel"){ S.hostel=e.target.value; renderBrowse(); }
+  if(e.target.id==="f-sort"){ S.sort=e.target.value; renderBrowse(); }
+  if(e.target.id==="f-sold"){ S.showSold=e.target.checked; renderBrowse(); }
+});
+let qt; $("#q").addEventListener("input", e=>{ clearTimeout(qt); qt=setTimeout(()=>{ S.q=e.target.value; if(S.tab!=="browse"){ S.tab="browse"; renderMain(); } else renderBrowse(); },150); });
+
+/* ---------- Boot ---------- */
+async function refreshNames(){
+  if(!S.user||typeof S.user.profiles!=="function") return;
+  const ids=new Set(Object.keys(S.sellers).concat(Object.keys(S.requests)));
+  if(S.me) ids.add(S.me);
+  const need=[...ids].filter(id=>!(id in S.names) && !(S.sellers[id]&&S.sellers[id].sample));
+  if(!need.length) return;
+  need.forEach(id=>S.names[id]="");
+  try{
+    const ps=await S.user.profiles(need);
+    need.forEach(id=>{ S.names[id]=(ps&&ps[id]&&ps[id].name)||""; });
+    renderMain(); refreshItemModal();
+  }catch(_){}
+}
+function afterData(){
+  if(S.pendMine===0) S.mineLocal=null;
+  if(S.pendReq===0) S.reqLocal=null;
+  renderMain(); refreshItemModal(); refreshNames();
+}
+async function boot(){
+  renderChips(); renderHostelFilter(); renderMain();
+  const C=window.claude;
+  if(!C||typeof C.use!=="function"){ S.status="nodb"; renderMain(); return; }
+  let db=null, user=null;
+  try{ [db,user]=await Promise.all([C.use("db"), C.use("user")]); }catch(_){}
+  S.user=user;
+  if(user){
+    try{ S.me=await user.id(); }catch(_){}
+    try{ S.isOwner=!!(await user.isOwner()); }catch(_){}
+    try{ S.canWrite=await user.can("data.write"); }catch(_){ S.canWrite=null; }
+  }
+  if(!db){ S.status="nodb"; renderMain(); return; }
+  S.db=db; S.status="loading"; renderMain();
+  let confirmed=false;
+  const timer=setTimeout(()=>{ if(!confirmed){ S.slow=true; renderMain(); } },10000);
+  db.collection("sellers").onSnapshot(snap=>{
+    const o={}; snap.docs.forEach(d=>{ if(d.exists){ const v=d.data(); if(v&&typeof v==="object") o[d.id]=v; } });
+    S.sellers=o; S.status="ready";
+    if(!snap.metadata.fromCache){ confirmed=true; clearTimeout(timer); S.slow=false; }
+    afterData();
+  }, err=>{ clearTimeout(timer); confirmed=true; if(S.status!=="ready") S.status="error"; renderMain(); });
+  db.collection("requests").onSnapshot(snap=>{
+    const o={}; snap.docs.forEach(d=>{ if(d.exists){ const v=d.data(); if(v&&typeof v==="object") o[d.id]=v; } });
+    S.requests=o; afterData();
+  }, ()=>{});
+  refreshNames();
+}
+boot();
+})();
+</script>
+</body>
+</html>
