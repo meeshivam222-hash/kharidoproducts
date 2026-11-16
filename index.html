@@ -92,6 +92,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 main{padding:20px 0 60px}
 .notice{border:1px solid var(--line);background:var(--surface);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14.5px}
 .notice.warn{border-left-color:var(--accent)}
+.notice a{color:inherit;font-weight:700}
 
 /* Browse */
 .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -438,7 +439,7 @@ async function compress(file){
 const chains={};
 function serial(key,task){ const p=(chains[key]||Promise.resolve()).then(task); chains[key]=p.catch(()=>{}); return p; }
 function canPost(){
-  if(!S.db||!S.me){ toast("Open KharidoProducts on claude.ai while signed in to buy or sell."); return false; }
+  if(!S.db||!S.me){ toast(S.demo?"These are sample listings. Selling and buying work on the live claude.ai version (link at the top).":"Open KharidoProducts on claude.ai while signed in to buy or sell."); return false; }
   if(S.readOnly||S.canWrite===false){ toast("You can browse, but posting needs Contributor access. Ask the page owner to share it with you as a Contributor."); return false; }
   return true;
 }
@@ -481,10 +482,11 @@ async function writeReqs(fn){
 /* ---------- Rendering ---------- */
 function renderStatus(){
   const el=$("#status"); let h="";
-  if(S.status==="nodb") h=`<div class="notice warn">Open this page on claude.ai while signed in to see live listings, sell items and send requests.</div>`;
+  if(S.demo) h=`<div class="notice warn">You're looking at <b>sample listings</b>. To sell, buy or send requests, use the <a href="${LIVE_URL}" target="_blank" rel="noopener">live KharidoProducts on claude.ai</a>.</div>`;
+  else if(S.status==="nodb") h=`<div class="notice warn">Open this page on claude.ai while signed in to see live listings, sell items and send requests.</div>`;
   else if(S.status==="error") h=`<div class="notice warn">The marketplace couldn't load. Reload the page to try again.</div>`;
   else if(S.slow) h=`<div class="notice warn">Can't reach the marketplace right now. What you see may be out of date.</div>`;
-  if(S.status==="ready" && (S.readOnly||S.canWrite===false)) h+=`<div class="notice">You can browse listings. To sell or send buy requests, ask the page owner to share KharidoProducts with you as a <b>Contributor</b>.</div>`;
+  if(S.status==="ready" && !S.demo && (S.readOnly||S.canWrite===false)) h+=`<div class="notice">You can browse listings. To sell or send buy requests, ask the page owner to share KharidoProducts with you as a <b>Contributor</b>.</div>`;
   el.innerHTML=h;
 }
 function renderChips(){
@@ -904,6 +906,35 @@ document.addEventListener("change", async e=>{
 });
 let qt; $("#q").addEventListener("input", e=>{ clearTimeout(qt); qt=setTimeout(()=>{ S.q=e.target.value; if(S.tab!=="browse"){ S.tab="browse"; renderMain(); } else renderBrowse(); },150); });
 
+
+/* ---------- Sample listings (shown when the live marketplace isn't available, e.g. on GitHub Pages) ---------- */
+const LIVE_URL = "https://claude.ai/artifact/XCLkHRNYmmqnJueKDh5S75";
+const DEMO = [
+  {title:"Kreyszig, Advanced Engineering Mathematics (10th ed.)", cat:"books", price:450, nego:true, cond:"Good", hostel:"Kumaon", h:3, desc:"Some pencil marks in chapters 1–4, otherwise clean. Useful for MTL courses."},
+  {title:"Bajaj room heater, 2000 W", cat:"room", price:900, nego:true, cond:"Good", hostel:"Satpura", h:6, desc:"Used one winter. Works on both settings. Pick up from the hostel gate."},
+  {title:"Sedra & Smith, Microelectronic Circuits (7th ed.)", cat:"books", price:550, nego:true, cond:"Like new", hostel:"Vindhyachal", h:9, desc:"Bought for ELL201. Hardly any highlighting."},
+  {title:"Casio fx-991EX scientific calculator", cat:"stationery", price:700, nego:false, cond:"Like new", hostel:"Girnar", h:14, status:"reserved", desc:"Comes with the cover. Allowed in most exams."},
+  {title:"Hero Sprint 26\" cycle with lock", cat:"cycles", price:2800, nego:true, cond:"Used", hostel:"Aravali", h:20, desc:"Gears work, new tubes fitted in August. Lock and key included."},
+  {title:"Arduino Uno starter kit with sensors", cat:"electronics", price:1100, nego:true, cond:"Good", hostel:"Zanskar", h:26, desc:"Uno board, breadboard, jumper wires, ultrasonic + IR + DHT11 sensors, servo. Everything works."},
+  {title:"Prestige electric kettle, 1.5 L", cat:"room", price:450, nego:false, cond:"Good", hostel:"Himadri", h:30, desc:"Perfect for Maggi and chai at 2 am. Auto cut-off works."},
+  {title:"Decathlon winter jacket, size L", cat:"clothing", price:1200, nego:true, cond:"Like new", hostel:"Kailash", h:40, desc:"Worn a few times last winter. Warm enough for Delhi January."},
+  {title:"Yonex badminton racket + 3 shuttles", cat:"sports", price:600, nego:true, cond:"Good", hostel:"Nilgiri", h:52, desc:"Strings are tight. Selling because I moved to squash."},
+  {title:"Philips LED study lamp", cat:"room", price:350, nego:false, cond:"Good", hostel:"Jwalamukhi", h:60, desc:"3 brightness levels, flexible neck. USB powered."},
+  {title:"Lab coat (size M) + drafter set", cat:"stationery", price:300, nego:true, cond:"Used", hostel:"Shivalik", h:75, desc:"First-year lab and ED kit. Coat washed, drafter scales are clear."},
+  {title:"Sleepwell single mattress, 4 inch", cat:"room", price:800, nego:true, cond:"Good", hostel:"Udaigiri", h:90, desc:"Fits the hostel bed. Cover included. Pick up before 25 Nov."},
+  {title:"SG Kashmir willow cricket bat", cat:"sports", price:700, nego:true, cond:"Used", hostel:"Dronagiri", h:110, desc:"Good for hostel matches. Grip replaced recently."},
+  {title:"6-socket extension board, 3 m cable", cat:"electronics", price:250, nego:false, cond:"Good", hostel:"Saptagiri", h:130, desc:"Has a surge protector and a master switch."},
+  {title:"boAt Rockerz 450 headphones", cat:"electronics", price:650, nego:false, cond:"Used", hostel:"Karakoram", h:160, status:"sold", desc:"Battery still lasts about 10 hours. Left cushion slightly worn."}
+];
+function loadDemo(){
+  const now=Date.now();
+  S.demo=true;
+  S.sellers={demo:{sample:true, items:DEMO.map((d,i)=>({id:"d"+i, title:d.title, cat:d.cat, price:d.price, nego:d.nego, cond:d.cond,
+    hostel:d.hostel, desc:d.desc, photos:0, pv:0, status:d.status||"available", created:now-d.h*3600000}))}};
+  S.status="ready";
+  renderMain();
+}
+
 /* ---------- Boot ---------- */
 async function refreshNames(){
   if(!S.user||typeof S.user.profiles!=="function") return;
@@ -926,7 +957,7 @@ function afterData(){
 async function boot(){
   renderChips(); renderHostelFilter(); renderMain();
   const C=window.claude;
-  if(!C||typeof C.use!=="function"){ S.status="nodb"; renderMain(); return; }
+  if(!C||typeof C.use!=="function"){ loadDemo(); return; }
   let db=null, user=null;
   try{ [db,user]=await Promise.all([C.use("db"), C.use("user")]); }catch(_){}
   S.user=user;
@@ -935,7 +966,7 @@ async function boot(){
     try{ S.isOwner=!!(await user.isOwner()); }catch(_){}
     try{ S.canWrite=await user.can("data.write"); }catch(_){ S.canWrite=null; }
   }
-  if(!db){ S.status="nodb"; renderMain(); return; }
+  if(!db){ loadDemo(); return; }
   S.db=db; S.status="loading"; renderMain();
   let confirmed=false;
   const timer=setTimeout(()=>{ if(!confirmed){ S.slow=true; renderMain(); } },10000);
